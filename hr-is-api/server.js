@@ -1,0 +1,12 @@
+const express = require('express')
+const bodyParser = require('body-parser')
+const cors = require('cors')
+const routes = require('./src/routes/index')
+require('dotenv').config({ path: __dirname + '/.env' })
+app = express()
+const port = process.env.PORT || 8081
+app.use(bodyParser.urlencoded({ extended: true }))
+app.use(bodyParser.json())
+app.use(cors())
+routes.Router(app)
+app.listen(port)
