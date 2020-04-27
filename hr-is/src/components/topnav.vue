@@ -5,9 +5,9 @@
     height=70
   >
     <v-spacer/>
-    <v-btn outlined rounded elevation=10 depressed @click="$router.push('/')">home</v-btn>
+    <v-btn outlined rounded elevation=10 depressed @click="$router.push('/home')">home</v-btn>
     <v-divider vertical class="mx-4"/>
-    <v-btn outlined rounded elevation=10 depressed @click="$router.push('/login')">login</v-btn>
+    <v-btn outlined rounded elevation=10 depressed>logout</v-btn>
   </v-app-bar>
 </template>
 

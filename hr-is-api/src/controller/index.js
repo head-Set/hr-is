@@ -1,5 +1,7 @@
 const Model = require('../model/index')
-
+const multer = require('multer')
+const path = require('path')
+const fs = require('fs')
 exports.addEmp = async (req, res) => {
     let details = {
         "emp_no": req.body.emp_no,
@@ -65,17 +67,23 @@ exports.getEmps = async (req, res) => {
     let dontMe = {
         __v: false,
         "benefits": false,
-        "address._id":false
+        "address._id": false
     }
     let check = await Model.listAll(dontMe)
-    let sendResponse=[{}]
+    let sendResponse = []
     check.map(data => {
+        let check = ''
+        if (data.details.ext_name != undefined) {
+            check = data.details.ext_name
+        }
         return sendResponse.push({
             "id": data._id,
-            // "emp_no":data.emp_no,
-            "name": data.details,
-            "address": data.address,
-            "dept": data.department.department
+            "emp_no": data.emp_no,
+            "name": data.details.lname.toUpperCase() + ', ' + data.details.fname.toUpperCase() + ' ' + data.details.mname.toUpperCase() + ' ' + check.toUpperCase(),
+            // "name": data.details.lname + ', ' + data.details.fname + ' ' + data.details.mname + ' ' + check,
+            "salary": data.salarygrade.grade,
+            "step": data.salarygrade.step,
+            "depts": data.department.department
         })
     })
     res.send(sendResponse)
@@ -83,10 +91,18 @@ exports.getEmps = async (req, res) => {
 
 exports.getEmp = async (req, res) => {
     let check = await Model.listOne(req.params.id)
-    let sendResponse = {
-        "name": check.details,
-        "add": check.address,
-        "dept": check.department
+    let sendResponse=[]
+    if (check==null||check=='') {
+        return sendResponse.push({
+            "error":"Error"
+        })
+    } else {
+        sendResponse.push({
+            "id": check._id,
+            "name": check.details.lname.toUpperCase() + ', ' + check.details.fname.toUpperCase() + ' ' + check.details.mname.toUpperCase() + ' ',
+            "add": check.address,
+            "dept": check.department.department
+        })
     }
     res.send(sendResponse)
 }
@@ -94,4 +110,39 @@ exports.getEmp = async (req, res) => {
 exports.deleteEmp = async (req, res) => {
     let resp = await Model.remove(req.params.id)
     res.json(resp)
+}
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        fs.mkdir('./uploads', (err) => {
+            if (err) console.log(err.stack)
+            cb(null, './uploads')
+        })
+    },
+    filename: (req, file, cb) => {
+        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname).toLowerCase() + '.png')
+    }
+})
+const fileFilter = (req, file, cb) => {
+    let allowed = ['image/jpg', 'image/jpeg', 'image/png']
+    if (allowed.includes(file.mimetype)) {
+        cb(null, true)
+    } else {
+        cb(new Error('failed'))
+    }
+}
+const uploadConfig = {
+    storage: storage,
+    limits: {
+        fileSize: 200 * 1024 * 1024
+    },
+    filefilter: fileFilter
+}
+const upload = multer(uploadConfig).single('file')
+
+exports.uploadFile = (req, res) => {
+    upload(req, res, (err) => {
+        if (err) res.send(err)
+        res.send("uploaded")
+    })
 }
